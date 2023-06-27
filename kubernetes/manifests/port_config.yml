@@ -1,0 +1,36 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-service
+spec:
+  type: NodePort
+  ports:
+  - name: app-port-1
+    port: 16261
+    nodePort: 31211 # this must be in the range 30000-32767
+    protocol: UDP
+  - name: app-port-2
+    port: 16262
+    nodePort: 31212 # this must be in the range 30000-32767
+    protocol: UDP
+  selector:
+    kubernetes.io/service-name: external-service
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: external-service-1
+  labels:
+    kubernetes.io/service-name: external-service
+addressType: FQDN
+ports:
+  - name: app-port-1
+    protocol: UDP
+    port: 16261
+  - name: app-port-2
+    protocol: UDP
+    port: 16262
+endpoints:
+  - addresses:
+    - localhost
