@@ -1,0 +1,95 @@
+- name: Ensure group "steam" exists
+  ansible.builtin.group:
+    name: "{{ server_admin_user }}"
+    state: present
+  become: true
+- name: create user
+  ansible.builtin.user:
+    name: "{{ server_admin_user }}"
+    comment: user for running jobs
+    group: "{{ server_admin_user }}"
+    shell: /bin/bash
+  become: true
+- name: Add specified repository into sources list (hetzner)
+  ansible.builtin.apt_repository:
+    repo: "{{ item }}"
+    state: present
+  loop:
+    - deb https://mirror.hetzner.com/ubuntu/packages jammy multiverse
+    - deb https://mirror.hetzner.com/ubuntu/packages jammy-updates multiverse
+    - deb https://mirror.hetzner.com/ubuntu/packages jammy-backports main restricted universe multiverse
+  when: cloud_provider == "hetzner"
+  become: true
+- name: Add specified repository into sources list (aws)
+  ansible.builtin.apt_repository:
+    repo: "{{ item }}"
+    state: present
+  loop:
+    - deb http://us-east-1.ec2.archive.ubuntu.com/ubuntu/ jammy multiverse
+    - deb http://us-east-1.ec2.archive.ubuntu.com/ubuntu/ jammy-updates multiverse
+    - deb http://us-east-1.ec2.archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
+  when: cloud_provider == "aws"
+  become: true
+# using shell since dpkg_selections and apt with dpkg_options dont seem to work
+- name: Add i386 architecture
+  command: dpkg --add-architecture i386
+  become: true
+- name: Run the equivalent of "apt-get update" as a separate step
+  ansible.builtin.apt:
+    update_cache: yes
+  become: true
+    #- name: Upgrade the OS (apt-get dist-upgrade)
+    #  ansible.builtin.apt:
+    #    upgrade: dist
+- name: install steamcmd pre-req
+  ansible.builtin.apt:
+    pkg: 
+      - software-properties-common
+      - lib32gcc-s1
+    state: latest
+  become: true
+- name: accept steam license
+  debconf:
+    name: "steamcmd"
+    question: "steam/question"
+    value: "I AGREE"
+    vtype: "select"
+  become: true
+- name: accept steam license
+  debconf:
+    name: "steamcmd"
+    question: "steam/license"
+    value: ''
+    vtype: "note"
+  become: true
+- name: accept steam license
+  debconf:
+    name: "steamcmd"
+    question: "steam/purge"
+    value: ''
+    vtype: "note" 
+  become: true
+- name: install steamcmd
+  command: apt install -y steamcmd
+  become: true
+- name: create opt folder for server
+  ansible.builtin.file:
+    path: "{{ server_files_path }}"
+    owner: "{{ server_admin_user }}"
+    group: "{{ server_admin_user }}"
+    state: directory
+  become: true
+- name: template the config file
+  ansible.builtin.template:
+    src:  templates/update_zomboid.j2
+    dest: "{{ server_config_path }}"
+    owner: "{{ server_admin_user }}"
+    group: "{{ server_admin_user }}"
+    mode: '0744'
+  become: true
+- name: install the server
+  # updating env doesn't seem to work, investigate why in the future
+  # fix permission related to become user
+  command: /usr/games/steamcmd +runscript "{{ server_config_path }}"
+  become: true
+  become_user: "{{ server_admin_user }}"

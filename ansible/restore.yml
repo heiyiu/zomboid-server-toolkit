@@ -1,0 +1,51 @@
+---
+  - name: "restore zomboid server save"
+    hosts: zomboid
+    vars:
+      ansible_remote_tmp: /tmp/
+      server_admin_user: "steam"
+      # seems to have a lot of perm issue in other directory
+      server_files_path: "/home/{{ server_admin_user }}/zomboid"
+      save_files_s_path: "/home/{{ server_admin_user }}/Zomboid/Server"
+      save_files_mp_path: "/home/{{ server_admin_user }}/Zomboid/Saves"
+      local_file_backup_base_path: /mnt/c/Users/Yukari/Documents/zomboid_saves
+      webhook_id: "WEBHOOK_ID_HERE"
+      webhook_token: "WEBHOOK_TOKEN_HERE"
+    tasks:
+      - file:
+          path: "{{ item }}"
+          state: directory
+        loop:
+          - "{{ save_files_s_path }}"
+          - "{{ save_files_mp_path }}"
+      - name: copy local backups to server
+        copy:
+          src: "{{ local_file_backup_base_path }}/{{ item }}"
+          dest: "{{ save_files_s_path }}/{{ item }}"
+          owner: "{{ server_admin_user }}"
+          group: "{{ server_admin_user }}"
+          mode: '0644'
+          force: true
+        loop:
+          - "options.ini"
+          - "servertest_SandboxVars.lua"
+          - "servertest_spawnregions.lua"
+          - "servertest.ini"
+          - "servertest_spawnpoints.lua"
+          - "Multiplayer2.tar"
+      - name: extract zipped multiple file to save directory
+        ansible.builtin.unarchive:
+          src: "{{ local_file_backup_base_path }}/Multiplayer2.tar"
+          dest: "{{ save_files_mp_path }}"
+      - name: update the memory limit on a beefier machine
+        ansible.builtin.replace:
+          path: "{{ server_files_path }}/ProjectZomboid64.json"
+          regexp: "-Xmx8g"
+          replace: "-Xmx16g"
+        when: ansible_facts.memory_mb.real.total >= 14336 # approx greater than 14 GB
+      - name: Send a notification message to the Discord channel
+        community.general.discord:
+          webhook_id: "{{ webhook_id }}"
+          webhook_token: "{{ webhook_token }}"
+          username: shrimple_alert
+          content: "Mint Chocolate Zomboid Server should be online shortly"

@@ -1,0 +1,30 @@
+---
+  - name: "backup zomboid server save"
+    hosts: zomboid
+    vars:
+      ansible_remote_tmp: /tmp/
+      server_admin_user: "steam"
+      # seems to have a lot of perm issue in other directory
+      save_files_s_path: "/home/{{ server_admin_user }}/Zomboid/Server"
+      save_files_mp_path: "/home/{{ server_admin_user }}/Zomboid/Saves"
+      local_file_backup_base_path: /mnt/c/Users/Yukari/Documents/zomboid_saves
+    tasks:
+      - name: zip directory
+        ansible.builtin.archive:
+          path: "{{ save_files_mp_path }}/Multiplayer"
+          dest: "{{ save_files_s_path }}/Multiplayer2.tar"
+          owner: "{{ server_admin_user }}"
+          format: "tar"
+      - name: copy local backups from server to local pc
+        fetch:
+          src: "{{ save_files_s_path }}/{{ item }}"
+          dest: "{{ local_file_backup_base_path }}/{{ item }}"
+          flat: yes
+        loop:
+          - "options.ini"
+          - "servertest_SandboxVars.lua"
+          - "servertest_spawnregions.lua"
+          - "servertest.ini"
+          - "servertest_spawnpoints.lua"
+          - "Multiplayer2.tar"
+    # run the server with bash start-server.sh (runs as a daemon)
