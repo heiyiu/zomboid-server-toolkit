@@ -9,11 +9,13 @@
       save_files_s_path: "/home/{{ server_admin_user }}/Zomboid/Server"
       save_files_mp_path: "/home/{{ server_admin_user }}/Zomboid/Saves"
       local_file_backup_base_path: /mnt/c/Users/Yukari/Documents/zomboid_saves
-      webhook_id: "WEBHOOK_ID_HERE"
-      webhook_token: "WEBHOOK_TOKEN_HERE"
+      webhook_id: ""
+      webhook_token: ""
     tasks:
       - file:
           path: "{{ item }}"
+          owner: "{{ server_admin_user }}"
+          group: "{{ server_admin_user }}"
           state: directory
         loop:
           - "{{ save_files_s_path }}"
@@ -42,10 +44,12 @@
           path: "{{ server_files_path }}/ProjectZomboid64.json"
           regexp: "-Xmx8g"
           replace: "-Xmx16g"
-        when: ansible_facts.memory_mb.real.total >= 14336 # approx greater than 14 GB
+        # approx greater than 14 GG
+        when: ansible_facts.memory_mb.real.total >= 14336
       - name: Send a notification message to the Discord channel
         community.general.discord:
           webhook_id: "{{ webhook_id }}"
           webhook_token: "{{ webhook_token }}"
           username: shrimple_alert
           content: "Mint Chocolate Zomboid Server should be online shortly"
+        when: webhook_id != "" and webhook_token != ""

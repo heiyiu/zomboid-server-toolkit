@@ -1,4 +1,6 @@
 # 5GB image/may be too big as an image
+# Not working because of initial admin password set
+# maybe copying the database over will fix it
 FROM cm2network/steamcmd:steam
 
 USER steam
