@@ -46,10 +46,12 @@
           replace: "-Xmx16g"
         # approx greater than 14 GG
         when: ansible_facts.memory_mb.real.total >= 14336
+      - name: Get public IP from ipify
+        community.general.ipify_facts:
       - name: Send a notification message to the Discord channel
         community.general.discord:
           webhook_id: "{{ webhook_id }}"
           webhook_token: "{{ webhook_token }}"
           username: shrimple_alert
-          content: "Mint Chocolate Zomboid Server should be online shortly"
+          content: "Mint Chocolate Zomboid Server should be online shortly\nServer IP: {{ ipify_public_ip }}"
         when: webhook_id != "" and webhook_token != ""
