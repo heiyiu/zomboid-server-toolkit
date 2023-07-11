@@ -1,0 +1,18 @@
+version: '3.9'
+services:
+  linuxgsm-pz:
+    image: "gameservermanagers/gameserver:pz"
+    container_name: pzserver
+    volumes:
+      - linuxgsm:/data
+    ports:
+      - "16261:16261/udp"
+      - "16262:16262/udp"
+    restart: unless-stopped
+volumes:
+  linuxgsm:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "{{ target_data_path }}"

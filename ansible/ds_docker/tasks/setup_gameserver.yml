@@ -1,0 +1,29 @@
+- name: mount volume with zomboid data
+  ansible.posix.mount:
+    path: "{{ volume_mount_path }}"
+    src: /dev/sdb
+    fstype: ext4
+    state: mounted
+- name: make directory for compose file
+  file:
+    state: directory
+    path: "{{ docker_compose_base_path }}"
+- name: make docker volume
+  file:
+    state: directory
+    path: "{{ target_data_path }}"
+    mode: '0766'
+- name: move docker compose file
+  template:
+    src: templates/docker-compose.j2
+    dest: "{{ docker_compose_file_path }}"
+- name: copy from volume backup to docker volume
+  copy:
+    remote_src: yes
+    # trailing slash required for directory mode
+    src: "{{ backup_data_path }}/"
+    dest: "{{ target_data_path }}/"
+    directory_mode: yes
+# docker-compose module requires docker-compose < 2.0.0.
+- name: start server
+  command: docker compose -f "{{ docker_compose_file_path }}"  up -d 

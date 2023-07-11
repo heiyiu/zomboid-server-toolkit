@@ -33,8 +33,8 @@
           - "servertest_SandboxVars.lua"
           - "servertest_spawnregions.lua"
           - "servertest.ini"
-          - "servertest_spawnpoints.lua"
-          - "Multiplayer2.tar"
+          #- "servertest_spawnpoints.lua"
+          - "Multiplayer.tar"
       - name: extract zipped multiple file to save directory
         ansible.builtin.unarchive:
           src: "{{ local_file_backup_base_path }}/Multiplayer2.tar"

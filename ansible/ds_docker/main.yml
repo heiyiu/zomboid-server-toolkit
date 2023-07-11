@@ -1,0 +1,18 @@
+---
+  - name: "load zomboid server save"
+    hosts: zomboid
+    vars:
+      ansible_remote_tmp: /tmp/
+      volume_mount_path: /mnt/zomboid_data
+      # trailing slash added on task level
+      backup_data_path: "{{ volume_mount_path }}/zomboid_linuxgsm/_data"
+      target_data_path: "/var/lib/docker/volumes/dockercompose_linuxgsm/_data"
+      docker_compose_base_path: /opt/zomboid/dockercompose
+      docker_compose_file_path: "{{ docker_compose_base_path }}/docker-compose.yml"
+    tasks:
+      - include_tasks: ./tasks/setup_gameserver.yml
+# TODO
+# backup: rsync -av /var/lib/docker/volumes/dockercompose_linuxgsm/_data/ /mnt/zomboid_data/zomboid_linuxgsm/_data/
+# restore: rsync -av  /mnt/zomboid_data/zomboid_linuxgsm/_data/ /var/lib/docker/volumes/dockercompose_linuxgsm/_data/
+# cleanup this path: :/var/lib/docker/volumes/dockercompose_linuxgsm/_data/serverfiles/steamapps/downloading before copyin
+# docker exec -it --user linuxgsm pzserver ./pzserver details
